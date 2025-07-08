@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -13,13 +13,22 @@ import PagosPendientes from "./pages/PagosPendientes";
 import MisDeudas from "./pages/MisDeudas";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
+import DeudasAdmin from "./pages/DeudasAdmin";
 
 function App() {
+  const location = useLocation();
+  // Si quieres ocultar el navbar en el login, puedes usar:
+  const hideNavbar = location.pathname === "/login";
+
   return (
     <>
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       <Routes>
+        {/* Redirección raíz al login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         <Route path="/login" element={<Login />} />
+
         {/* Rutas solo para administradores */}
         <Route
           path="/dashboard"
@@ -73,6 +82,15 @@ function App() {
             </RequireAuth>
           }
         />
+
+        <Route
+          path="/deudas-admin"
+          element={
+            <RequireAuth allowedRoles={["admin"]}>
+              <DeudasAdmin />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/reportes"
           element={
@@ -85,7 +103,7 @@ function App() {
         <Route
           path="/pagos-pendientes"
           element={
-            <RequireAuth role="admin">
+            <RequireAuth allowedRoles={["admin"]}>
               <PagosPendientes />
             </RequireAuth>
           }
@@ -118,8 +136,9 @@ function App() {
           }
         />
 
+        {/* Ruta catch-all: redirige a login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-      
     </>
   );
 }

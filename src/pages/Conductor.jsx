@@ -4,7 +4,7 @@ import api from '../services/api';
 function Conductor() {
   const [vehiculo, setVehiculo] = useState(null);
   const [monto, setMonto] = useState('');
-  const [metodo, setMetodo] = useState('pse');
+  const [metodo, setMetodo] = useState('manual');
   const [comprobante, setComprobante] = useState(null);
 
   useEffect(() => {
@@ -83,6 +83,7 @@ function Conductor() {
                   type="radio"
                   name="metodo"
                   value="pse"
+                  disabled
                   checked={metodo === 'pse'}
                   onChange={() => setMetodo('pse')}
                 />

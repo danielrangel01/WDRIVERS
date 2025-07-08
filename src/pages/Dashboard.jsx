@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import { formatoPesos } from "../utils/formatNumber";
+
 
 function Dashboard() {
   const [resumen, setResumen] = useState(null);
@@ -22,11 +24,11 @@ function Dashboard() {
       <h2>Resumen General</h2>
 
       <ul>
-        <li><strong>Ingresos hoy:</strong> ${resumen.ingresosHoy}</li>
-        <li><strong>Ingresos mes:</strong> ${resumen.ingresosMes}</li>
+        <li><strong>Ingresos hoy:</strong>{formatoPesos(resumen.ingresosHoy)}</li>
+        <li><strong>Ingresos mes:</strong>{formatoPesos(resumen.ingresosMes)}</li>
         <li><strong>Conductores activos hoy:</strong> {resumen.conductoresHoy}</li>
-        <li><strong>Utilidad del mes:</strong> ${resumen.utilidadMes}</li>
-        <li><strong>Deudas generadas mes:</strong> ${resumen.totalDeudasMes || 0}</li>
+        <li><strong>Utilidad del mes:</strong>{formatoPesos(resumen.utilidadMes)}</li>
+        <li><strong>Deudas generadas mes:</strong>{formatoPesos(resumen.totalDeudasMes) || 0}</li>
       </ul>
 
       <h3 style={{ marginTop: '2rem' }}>Utilidades y Deudas por Vehículo</h3>
@@ -45,10 +47,10 @@ function Dashboard() {
             {resumen.utilidadesPorVehiculo.map((v, i) => (
               <tr key={i}>
                 <td style={{ padding: '0.5rem' }}>{v.vehiculo}</td>
-                <td style={{ padding: '0.5rem' }}>${v.ingresos}</td>
-                <td style={{ padding: '0.5rem' }}>${v.gastos}</td>
-                <td style={{ padding: '0.5rem' }}>${v.deudas || 0}</td>
-                <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>${v.utilidad}</td>
+                <td style={{ padding: '0.5rem' }}>{formatoPesos(v.ingresos)}</td>
+                <td style={{ padding: '0.5rem' }}>{formatoPesos(v.gastos)}</td>
+                <td style={{ padding: '0.5rem' }}>{formatoPesos(v.deudas || 0)}</td>
+                <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>{formatoPesos(v.utilidad)}</td>
               </tr>
             ))}
           </tbody>

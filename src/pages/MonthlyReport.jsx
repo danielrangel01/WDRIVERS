@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import {formatoPesos} from '../utils/formatNumber'
 
 function MonthlyReport() {
   const [resumen, setResumen] = useState([]);
@@ -87,10 +88,10 @@ function MonthlyReport() {
       <h2>📊 Reporte Mensual</h2>
       <div>
         <h3>Totales</h3>
-        <p>💰 Ingresos totales: ${totales.ingresosTotales}</p>
-        <p>📉 Gastos totales: ${totales.gastosTotales}</p>
-        <p>⚠️ Deudas totales: ${totales.totalDeudas}</p>
-        <p>📈 Utilidad neta: ${totales.utilidadTotal}</p>
+        <p>💰 Ingresos totales: ${formatoPesos(totales.ingresosTotales)}</p>
+        <p>📉 Gastos totales: {totales.gastosTotales}</p>
+        <p>⚠️ Deudas totales: {formatoPesos(totales.totalDeudas)}</p>
+        <p>📈 Utilidad neta: {formatoPesos(totales.utilidadTotal)}</p>
       </div>
       <button onClick={exportToExcel} style={{ marginBottom: "1rem" }}>
         Exportar a Excel
@@ -100,7 +101,7 @@ function MonthlyReport() {
         <ul>
           {movimientos.map((m, i) => (
             <li key={i}>
-              {new Date(m.fecha).toLocaleDateString()} — {m.tipo} — {m.descripcion} — ${m.monto} — {m.placa}
+              {new Date(m.fecha).toLocaleDateString()} — {m.tipo} — {m.descripcion} — {formatoPesos(m.monto)} — {m.placa}
             </li>
           ))}
         </ul>
