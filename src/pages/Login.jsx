@@ -1,14 +1,18 @@
-// File: /frontend/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./Login.css";
-import Conductor from "./Conductor";
+import AlertaGlobal from "../components/AlertaGlobal";
 
 function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [alerta, setAlerta] = useState({ open: false, message: "", severity: "error" });
+
+  const mostrarAlerta = (message, severity = "error") => {
+    setAlerta({ open: true, message, severity });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,19 +28,24 @@ function Login() {
           token: res.data.token,
         })
       );
-      console.log(res.data.role);
       if (res.data.role === "admin") {
         navigate("/dashboard");
       } else {
         navigate("/conductor");
       }
     } catch {
-      alert("❌ Credenciales inválidas");
+      mostrarAlerta("❌ Credenciales inválidas", "error");
     }
   };
 
   return (
     <div className="login-wrapper">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
       <div className="login-box">
         <h2>Iniciar sesión</h2>
         <form onSubmit={handleLogin}>

@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import AlertaGlobal from '../components/AlertaGlobal';
 
 function Vehicles() {
   const [vehiculos, setVehiculos] = useState([]);
-  const [formData, setFormData] = useState({ placa: '', modelo: '', tarifaDiaria: 0, tipo: '' });
+  const [formData, setFormData] = useState({ placa: '', modelo: '', tarifaDiaria: '', tipo: '' });
   const [showForm, setShowForm] = useState(false);
+  const [alerta, setAlerta] = useState({ open: false, message: '', severity: 'info' });
+
+  const mostrarAlerta = (message, severity = 'info') => {
+    setAlerta({ open: true, message, severity });
+  };
 
   const fetchVehiculos = async () => {
     const token = localStorage.getItem('token');
@@ -22,20 +28,36 @@ function Vehicles() {
     e.preventDefault();
     const token = localStorage.getItem('token'); 
     try {
-      await api.post('/vehiculos',  { placa: formData.placa, modelo: formData.modelo, tarifaDiaria: 70000, tipo: formData.tipo }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFormData({ placa: '', modelo: '', tarifaDiaria: 0, tipo: '' });
+      await api.post(
+        '/vehiculos',
+        { 
+          placa: formData.placa, 
+          modelo: formData.modelo, 
+          tarifaDiaria: parseInt((formData.tarifaDiaria + '').replace(/\./g, "")) || 0, 
+          tipo: formData.tipo 
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setFormData({ placa: '', modelo: '', tarifaDiaria: '', tipo: '' });
       setShowForm(false);
       fetchVehiculos();
-      alert('✅ Vehículo creado');
+      mostrarAlerta('✅ Vehículo creado', 'success');
     } catch {
-      alert('❌ Error al crear vehículo');
+      mostrarAlerta('❌ Error al crear vehículo', 'error');
     }
   };
 
   return (
     <div className="container">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
+
       <h2>Vehículos</h2>
 
       <button onClick={() => setShowForm(!showForm)}>
@@ -60,13 +82,21 @@ function Vehicles() {
           />
 
           <input
-          type="number"
-          placeholder="tarifaDiaria"
-          value={formData.tarifaDiaria}
-          onChange={(e) => setFormData({ ...formData, tarifaDiaria: e.target.value })}
-          required
+            type="text"
+            inputMode="numeric"
+            placeholder="Tarifa diaria"
+            value={formData.tarifaDiaria}
+            onChange={e =>
+              setFormData({
+                ...formData,
+                tarifaDiaria: e.target.value
+                  .replace(/[^\d]/g, "")
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+              })
+            }
+            required
           />
-          
+
           <input
             type="text"
             placeholder="Tipo (ej: moto, carro)"

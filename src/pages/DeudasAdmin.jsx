@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-
+import AlertaGlobal from "../components/AlertaGlobal";
 
 function DeudasAdmin() {
   const [deudas, setDeudas] = useState([]);
@@ -9,16 +9,28 @@ function DeudasAdmin() {
   const [eliminando, setEliminando] = useState(null); // { _id }
   const [motivo, setMotivo] = useState("");
 
+  // Alerta MUI
+  const [alerta, setAlerta] = useState({ open: false, message: '', severity: 'info' });
+
+  const mostrarAlerta = (message, severity = 'info') => {
+    setAlerta({ open: true, message, severity });
+  };
+
   const fetchDeudas = async () => {
     const token = localStorage.getItem("token");
-    const res = await api.get("/pagos/deudas-admin", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setDeudas(res.data);
+    try {
+      const res = await api.get("/pagos/deudas-admin", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeudas(res.data);
+    } catch {
+      mostrarAlerta("Error cargando deudas", "error");
+    }
   };
 
   useEffect(() => {
     fetchDeudas();
+    // eslint-disable-next-line
   }, []);
 
   const handleEditar = (deuda) => {
@@ -35,10 +47,11 @@ function DeudasAdmin() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEditando(null);
+      mostrarAlerta("Monto de deuda actualizado", "success");
       fetchDeudas();
     } catch (e) {
-      console.log(e);    
-      alert("Error editando monto");
+      console.log(e);
+      mostrarAlerta("Error editando monto", "error");
     }
   };
 
@@ -55,15 +68,23 @@ function DeudasAdmin() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEliminando(null);
+      mostrarAlerta("Deuda eliminada correctamente", "success");
       fetchDeudas();
     } catch (e) {
       console.log(e);
-      alert("Error eliminando deuda");
+      mostrarAlerta("Error eliminando deuda", "error");
     }
   };
 
   return (
     <div className="container">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
+
       <h2>Deudas de Conductores</h2>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {deudas.map((d) => (

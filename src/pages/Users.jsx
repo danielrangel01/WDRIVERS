@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import AlertaGlobal from '../components/AlertaGlobal';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -11,6 +12,11 @@ function Users() {
     assignedVehicle: ''
   });
   const [showForm, setShowForm] = useState(false);
+  const [alerta, setAlerta] = useState({ open: false, message: '', severity: 'info' });
+
+  const mostrarAlerta = (message, severity = 'info') => {
+    setAlerta({ open: true, message, severity });
+  };
 
   const fetchUsers = async () => {
     const token = localStorage.getItem('token');
@@ -43,14 +49,21 @@ function Users() {
       setFormData({ username: '', password: '', role: 'conductor', assignedVehicle: '' });
       setShowForm(false);
       fetchUsers();
-      alert('✅ Usuario creado');
+      mostrarAlerta('✅ Usuario creado', 'success');
     } catch {
-      alert('❌ Error al crear usuario');
+      mostrarAlerta('❌ Error al crear usuario', 'error');
     }
   };
 
   return (
     <div className="container">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
+
       <h2>Usuarios</h2>
 
       <button onClick={() => setShowForm(!showForm)}>

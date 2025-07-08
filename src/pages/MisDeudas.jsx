@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import AlertaGlobal from "../components/AlertaGlobal";
 
 function MisDeudas() {
   const [deudas, setDeudas] = useState([]);
@@ -7,6 +8,15 @@ function MisDeudas() {
   const [metodo, setMetodo] = useState("pse");
   const [comprobante, setComprobante] = useState(null);
   const [cargando, setCargando] = useState(false);
+
+  // Estado para alertas
+  const [alerta, setAlerta] = useState({ open: false, message: "", severity: "info" });
+  const mostrarAlerta = (message, severity = "info") => {
+    setAlerta({ open: true, message, severity });
+  };
+
+  const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
   const fetchDeudas = async () => {
     const token = localStorage.getItem("token");
@@ -19,6 +29,28 @@ function MisDeudas() {
   useEffect(() => {
     fetchDeudas();
   }, []);
+
+  // Nuevo handler robusto para validar archivo
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setComprobante(null);
+      return;
+    }
+    if (!allowedTypes.includes(file.type)) {
+      mostrarAlerta("Solo se permiten imágenes jpg, jpeg, png o webp.", "warning");
+      e.target.value = "";
+      setComprobante(null);
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      mostrarAlerta("El archivo debe ser menor a 2 MB.", "warning");
+      e.target.value = "";
+      setComprobante(null);
+      return;
+    }
+    setComprobante(file);
+  };
 
   const handlePagar = async (e) => {
     e.preventDefault();
@@ -36,11 +68,11 @@ function MisDeudas() {
         if (res.data.checkoutUrl) {
           window.location.href = res.data.checkoutUrl;
         } else {
-          alert("Error generando enlace PSE");
+          mostrarAlerta("Error generando enlace PSE", "error");
         }
       } else {
         if (!comprobante) {
-          alert("Debes subir un comprobante.");
+          mostrarAlerta("Debes subir un comprobante.", "warning");
           setCargando(false);
           return;
         }
@@ -58,7 +90,7 @@ function MisDeudas() {
             },
           }
         );
-        alert("Pago manual enviado. Espera aprobación del administrador.");
+        mostrarAlerta("Pago manual enviado. Espera aprobación del administrador.", "success");
         setPagando(null);
         setComprobante(null);
         setMetodo("pse");
@@ -66,19 +98,26 @@ function MisDeudas() {
       }
     } catch (err) {
       console.log(err);
-      alert("Error procesando pago");
+      mostrarAlerta("Error procesando pago", "error");
     }
     setCargando(false);
   };
 
   return (
     <div className="container">
+      {/* Alerta global MUI */}
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
+
       <h2>Mis Deudas Pendientes</h2>
       {deudas.length === 0 && <p>No tienes deudas pendientes 🎉</p>}
       <ul style={{ listStyle: "none", padding: 0 }}>
         {deudas.map((d) => {
           // Chequea si está pendiente de aprobación manual
-          
           const creada =
             d.metodo === "manual" &&
             !d.pagada &&
@@ -207,11 +246,12 @@ function MisDeudas() {
               <div>
                 <input
                   type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setComprobante(e.target.files[0])}
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFile}
                   required
                   disabled={cargando}
                 />
+                <small>Máx 2MB. Solo jpg, jpeg, png, webp.</small>
               </div>
             )}
             <button type="submit" disabled={cargando} style={{ marginTop: "1rem" }}>

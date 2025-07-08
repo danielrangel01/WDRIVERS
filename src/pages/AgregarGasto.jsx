@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import AlertaGlobal from '../components/AlertaGlobal';
 
 function AgregarGasto() {
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [vehiculo, setVehiculo] = useState('');
   const [vehiculosList, setVehiculosList] = useState([]);
+  const [alerta, setAlerta] = useState({ open: false, message: '', severity: 'info' });
+
+  const mostrarAlerta = (message, severity = 'info') => {
+    setAlerta({ open: true, message, severity });
+  };
 
   useEffect(() => {
     const fetchVehiculos = async () => {
       const token = localStorage.getItem('token');
-      const res = await api.get('/vehiculos', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVehiculosList(res.data);
+      try {
+        const res = await api.get('/vehiculos', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setVehiculosList(res.data);
+      } catch {
+        mostrarAlerta('❌ Error al cargar vehículos', 'error');
+      }
     };
     fetchVehiculos();
   }, []);
@@ -27,18 +37,24 @@ function AgregarGasto() {
         { monto, descripcion, vehiculo },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('✅ Gasto registrado');
+      mostrarAlerta('✅ Gasto registrado', 'success');
       setMonto('');
       setDescripcion('');
       setVehiculo('');
     } catch (err) {
-        console.log(err);
-        alert('❌ Error al registrar gasto');
+      console.log(err);
+      mostrarAlerta('❌ Error al registrar gasto', 'error');
     }
   };
 
   return (
     <div className="container">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
       <h2>Registrar Gasto</h2>
       <form onSubmit={handleSubmit}>
         <label>Vehículo:</label>

@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import AlertaGlobal from '../components/AlertaGlobal';
 
 function Conductor() {
   const [vehiculo, setVehiculo] = useState(null);
   const [monto, setMonto] = useState('');
   const [metodo, setMetodo] = useState('manual');
   const [comprobante, setComprobante] = useState(null);
+
+  // Alertas MUI
+  const [alerta, setAlerta] = useState({ open: false, message: '', severity: 'info' });
+  const mostrarAlerta = (message, severity = 'info') => {
+    setAlerta({ open: true, message, severity });
+  };
+
+  // Definir límites y tipos permitidos
+  const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
   useEffect(() => {
     const fetchVehiculo = async () => {
@@ -16,19 +27,48 @@ function Conductor() {
         });
         setVehiculo(res.data);
       } catch {
-        alert('❌ Error al cargar el vehículo');
+        mostrarAlerta('❌ Error al cargar el vehículo', 'error');
       }
     };
 
     fetchVehiculo();
+  
   }, []);
+
+  // Nueva función para validar archivo
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setComprobante(null);
+      return;
+    }
+    if (!allowedTypes.includes(file.type)) {
+      mostrarAlerta("Solo se permiten imágenes jpg, jpeg, png o webp.", "warning");
+      e.target.value = "";
+      setComprobante(null);
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      mostrarAlerta("El archivo debe ser menor a 2 MB.", "warning");
+      e.target.value = "";
+      setComprobante(null);
+      return;
+    }
+    setComprobante(file);
+  };
 
   const registrarPago = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
 
-    if (!vehiculo) return alert('❌ No tienes vehículo asignado');
-    if (!monto) return alert('❌ Ingresa un monto');
+    if (!vehiculo) {
+      mostrarAlerta('❌ No tienes vehículo asignado', 'error');
+      return;
+    }
+    if (!monto) {
+      mostrarAlerta('❌ Ingresa un monto', 'warning');
+      return;
+    }
 
     try {
       if (metodo === 'pse') {
@@ -37,6 +77,10 @@ function Conductor() {
         });
         window.location.href = res.data.checkoutUrl;
       } else {
+        if (!comprobante) {
+          mostrarAlerta('Debes subir un comprobante.', 'warning');
+          return;
+        }
         const formData = new FormData();
         formData.append('monto', monto);
         formData.append('comprobante', comprobante);
@@ -48,18 +92,25 @@ function Conductor() {
           }
         });
 
-        alert('✅ Pago manual enviado. Esperando aprobación del administrador.');
+        mostrarAlerta('✅ Pago manual enviado. Esperando aprobación del administrador.', 'success');
         setMonto('');
         setComprobante(null);
       }
     } catch (err) {
       console.error(err);
-      alert('❌ Error al registrar el pago');
+      mostrarAlerta('❌ Error al registrar el pago', 'error');
     }
   };
 
   return (
     <div className="container">
+      <AlertaGlobal
+        open={alerta.open}
+        message={alerta.message}
+        severity={alerta.severity}
+        onClose={() => setAlerta({ ...alerta, open: false })}
+      />
+
       <h2>Mi Vehículo</h2>
 
       {vehiculo ? (
@@ -107,10 +158,11 @@ function Conductor() {
                 <label>Sube tu comprobante de pago:</label>
                 <input
                   type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setComprobante(e.target.files[0])}
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFile}
                   required
                 />
+                <small>Máx 2MB. Solo jpg, jpeg, png, webp.</small>
               </div>
             )}
 
