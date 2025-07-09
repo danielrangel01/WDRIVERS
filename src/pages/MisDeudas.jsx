@@ -224,8 +224,9 @@ function MisDeudas() {
                   name="metodo"
                   value="pse"
                   checked={metodo === "pse"}
+                  disabled
                   onChange={() => setMetodo("pse")}
-                  disabled={cargando}
+                  
                 />
                 Pago con PSE
               </label>
